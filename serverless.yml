@@ -1,0 +1,78 @@
+service: product-service
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  region: us-east-1
+
+functions:
+  getProductsList:
+    handler: handler.getProductsList
+    events:
+      - http:
+          path: /products
+          method: get
+          cors: true
+          integration: lambda
+
+  getProductsById:
+    handler: handler.getProductsById
+    events:
+      - http:
+          path: /products/{productId}
+          method: get
+          cors: true
+          integration: lambda
+
+resources:
+  Resources:
+    ApiGatewayRestApi:
+      Type: AWS::ApiGateway::RestApi
+      Properties:
+        Name: product-api
+    ApiGatewayResourceProducts:
+      Type: AWS::ApiGateway::Resource
+      Properties:
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        ParentId:
+          Fn::GetAtt:
+            - ApiGatewayRestApi
+            - RootResourceId
+        PathPart: products
+    ApiGatewayMethodProductsGet:
+      Type: AWS::ApiGateway::Method
+      Properties:
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        ResourceId:
+          Ref: ApiGatewayResourceProducts
+        HttpMethod: GET
+        AuthorizationType: NONE
+        Integration:
+          Type: AWS_PROXY
+          IntegrationHttpMethod: POST
+          Uri:
+            Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${getProductsList.Arn}/invocations
+    ApiGatewayResourceProductById:
+      Type: AWS::ApiGateway::Resource
+      Properties:
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        ParentId:
+          Ref: ApiGatewayResourceProducts
+        PathPart: "{productId}"
+    ApiGatewayMethodProductByIdGet:
+      Type: AWS::ApiGateway::Method
+      Properties:
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        ResourceId:
+          Ref: ApiGatewayResourceProductById
+        HttpMethod: GET
+        AuthorizationType: NONE
+        Integration:
+          Type: AWS_PROXY
+          IntegrationHttpMethod: POST
+          Uri:
+            Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${getProductsById.Arn}/invocations
