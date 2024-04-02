@@ -95,3 +95,4 @@ To learn more about the capabilities of `serverless-offline`, please refer to it
 # aws-node-http-api-project
 # aws-node-http-api-project
 # aws-node-http-api-project
+# aws-node-http-api-project
